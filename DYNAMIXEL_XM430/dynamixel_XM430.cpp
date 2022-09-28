@@ -6,7 +6,9 @@ XM430_bus::XM430_bus(uint32_t baud, PinName tx, PinName rx, PinName rts): sbus(t
     baudrate = baud;
     return_delay = 0.0005f; // defaults to 500us
     wait_ms(300);
-   
+    if (RCC->AHB1ENR != RCC_AHB1ENR_DMA1EN){
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+    }
     rtswitch.mode(OpenDrainNoPull);
     rtswitch.output();
     sbus.baud(baudrate);
@@ -115,19 +117,20 @@ void XM430_bus::sWrite(uint8_t data_length, uint16_t address, uint8_t param[], u
 /***** Dynamixel Protocol 2.0 Methods *****/
 void XM430_bus::sendIPacket()
 {
-    float timeOut = 12.0 * (float) ((float) iPacketLength) / ((float) baudrate); //12 = 10 (start + 8 bits + stop) + 2 (gives a bit more time)
+    // float timeOut = 12.0 * (float) ((float) iPacketLength) / ((float) baudrate); //12 = 10 (start + 8 bits + stop) + 2 (gives a bit more time)
 
     //Send packet
     rtswitch = 1; // set switch output to "transmit"
     
-    wait_us(20); //15us from Adi // 20us from David
-    
+    // wait_us(20); //15us from Adi // 20us from David
+    wait_us(20);
     for(int i = 0; i < iPacketLength; i++) sbus.putc(iPacket[i]);
 
     //Waits for sending before doing something else
-    wait_us(25); // 25us from Adi
+    // wait_us(25); // 25us from Adi
+    wait_us(25);
     
-//    wait(timeOut); // should be on the order of 120us? // float is too small?
+    //wait(timeOut); // should be on the order of 120us? // float is too small?
     rtswitch = 0; // set switch output to "receive"
 }
 
@@ -139,6 +142,7 @@ void XM430_bus::getRPacket()
     
     wait_us(10); // same as delay in sendIPacket(); // Changed to 10us by David
     Timer tr;
+    tr.reset();
     tr.start();
     while((i < rPacketLength)){ // && (tr.read() <= timeOut*2.0)) {
 //        rPacket[i] = sbus.getc();
@@ -151,7 +155,7 @@ void XM430_bus::getRPacket()
     }
     tr.stop();
     //pc.printf("condition :%f\n\r",tr.read());
-    if (tr.read() >= timeOut) rPacket[8] = 0x00; //Creates an error code for the missed packet
+    if (tr.read() >= timeOut) rPacket[8] = 0x80; //Creates an error code for the missed packet
 }
 
 /***** Generic functions *****/
@@ -169,7 +173,7 @@ void XM430_bus::SetSomething(uint8_t id, uint16_t address, uint8_t param[], uint
             break;
 
         case 0x80 :
-            //pc.printf("Missed status packet\r\n"); // Print error 
+            pc.printf("Missed status packet\r\n"); // Print error 
             break;
 
         default :   //Error occurred

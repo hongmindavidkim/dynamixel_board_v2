@@ -67,8 +67,13 @@
 
 // Initialize serial port
 RawSerial pc(PA_9, PA_10, 921600);
-RawSerial uart(PC_10, PC_11);
-DigitalInOut RTS(PA_6);
+
+RawSerial uart1(PC_10, PC_11);
+DigitalInOut RTS1(PA_4);
+RawSerial uart2(PC_12, PD_2);
+DigitalInOut RTS2(PA_5);
+RawSerial uart3(PC_6, PC_7);
+DigitalInOut RTS3(PA_7);
 
 // TODO: add wrist roll back in here!
 uint8_t dxl_ID[] =  {1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -544,11 +549,11 @@ void sendCAN(){
 }
 // Main loop, receiving commands as fast as possible, then writing to a dynamixel
 int main() {
-    RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
-    wait_us(2000000);
+    pc.printf("-------------------------\r\n");
+    pc.printf("System clock: %d\r\n", SystemCoreClock);
     // XM430_bus dxl_bus(4000000, PC_10, PC_11, PA_6); // baud, tx, rx, rts
     XM430_bus dxl_bus_left(2000000, PC_10, PC_11, PA_4); // baud, tx, rx, rts, left finger
-    XM430_bus dxl_bus_right(2000000, PC_12, PC_2, PA_5); // baud, tx, rx, rts, right finger
+    XM430_bus dxl_bus_right(2000000, PC_12, PD_2, PA_5); // baud, tx, rx, rts, right finger
     XM430_bus dxl_bus_wrist(2000000, PC_6, PC_7, PA_7); // baud, tx, rx, rts, wrist and Ab/Ads
     wait_us(1000000);
 
@@ -583,7 +588,7 @@ int main() {
     rxMsg.len = 8;
 
     // dynamixel
-    pc.printf("Setting up Dynamixel bus\n\r");
+    pc.printf("Setting up Dynamixel bus\r\n");
     // Enable dynamixels and set control mode...individual version
     for (int i=0; i<3; i++) {
         dxl_bus_left.SetTorqueEn(dxl_left_ids[i],0x00);
@@ -591,7 +596,7 @@ int main() {
         dxl_bus_left.SetControlMode(dxl_left_ids[i], CURRENT_CONTROL);
         wait_us(100000);
         dxl_bus_left.TurnOnLED(dxl_left_ids[i], 0x01);
-        pc.printf("Init Dynamixel ID: %d \n\r",dxl_left_ids[i]);
+        pc.printf("Init Dynamixel ID: %d\r\n",dxl_left_ids[i]);
         //dxl_bus.TurnOnLED(dxl_ID[i], 0x00); // turn off LED
         dxl_bus_left.SetTorqueEn(dxl_left_ids[i],0x01); //to be able to move 
         wait_us(100000);
@@ -603,7 +608,7 @@ int main() {
         dxl_bus_right.SetControlMode(dxl_right_ids[i], CURRENT_CONTROL);
         wait_us(100000);
         dxl_bus_right.TurnOnLED(dxl_right_ids[i], 0x01);
-        pc.printf("Init Dynamixel ID: %d \n\r",dxl_right_ids[i]);
+        pc.printf("Init Dynamixel ID: %d \r\n",dxl_right_ids[i]);
         //dxl_bus.TurnOnLED(dxl_ID[i], 0x00); // turn off LED
         dxl_bus_right.SetTorqueEn(dxl_right_ids[i],0x01); //to be able to move 
         wait_us(100000);
@@ -617,7 +622,7 @@ int main() {
         dxl_bus_wrist.SetControlMode(dxl_wrist_ids[i], CURRENT_CONTROL);
         wait_us(100000);
         dxl_bus_wrist.TurnOnLED(dxl_wrist_ids[i], 0x01);
-        pc.printf("Init Dynamixel ID: %d \n\r",dxl_wrist_ids[i]);
+        pc.printf("Init Dynamixel ID: %d \r\n",dxl_wrist_ids[i]);
         //dxl_bus.TurnOnLED(dxl_ID[i], 0x00); // turn off LED
         dxl_bus_wrist.SetTorqueEn(dxl_wrist_ids[i],0x01); //to be able to move 
         wait_us(100000);
@@ -632,7 +637,7 @@ int main() {
         dxl_bus_wrist.SetPosDGain(dxl_wrist_ids[i], 15000);
         wait_us(100000);
         dxl_bus_wrist.TurnOnLED(dxl_wrist_ids[i], 0x01);
-        pc.printf("Init Dynamixel ID: %d \n\r",dxl_wrist_ids[i]);
+        pc.printf("Init Dynamixel ID: %d \r\n",dxl_wrist_ids[i]);
         //dxl_bus.TurnOnLED(dxl_ID[i], 0x00); // turn off LED
         dxl_bus_wrist.SetTorqueEn(dxl_wrist_ids[i],0x01); //to be able to move 
         wait_us(100000);
